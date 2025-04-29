@@ -1,7 +1,7 @@
 using LinearAlgebra
 using GLMakie
 using GeometryBasics: Point3f, GLTriangleFace
-include("util.jl")
+include("main/util.jl")
 
 function drawSheet(ra,rb,ele) #drawSheet([0,-5,0],[0,5,0], 3pi/2) Sheet plana en xy con vector normal apuntando hacia +z
     middle = [(ra[i]+rb[i])/2 for i in 1:length(ra)]
