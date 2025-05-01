@@ -75,7 +75,7 @@ function integral_GR2284(AA, BB, a, b, c, p)
             logl = log(Complex((tmp1l + tmp2l) / (tmp1l - tmp2l)))
             I2 = (0.5 / im) * (logu - logl)
         else
-            sqrt_part2 = sqrt(b^2 - 4 * (a + p) * c)
+            sqrt_part2 = sqrt(Complex(b^2 - 4 * (a + p) * c))
             tmp1u = sqrt_part2 * sqrt(Ru)
             tmp2u = sqrt(-p) * (b + c)
             tmp1l = sqrt_part2 * sqrt(Rl)

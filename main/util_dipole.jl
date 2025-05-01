@@ -1,4 +1,4 @@
-using GLMakie
+using PlotlyJS
 include("core_dipole.jl")
 
 function drawDipole(u, val)
@@ -7,22 +7,9 @@ function drawDipole(u, val)
     gx= -w:(w/3):w; gy=gx; gz=gx; x = gx; z = gz 
     y = gy #zeros(size(z))
 
-    xp = [0, u[1]]; yp = [0, u[2]]; zp = [0, u[3]]
-
-    lines!(ax, xp, yp, zp, color=:green)
-
     p = [[x[kx], y[ky], z[kz]] for kx in 1:length(gx) for ky in 1:length(gy) for kz in 1:length(gz)]
     B = [Bevaluate(u, p[i], val) for i in 1:length(p)]
-    
-    for k in 1:length(B)
-        xs = [0,p[k][1]]; ys = [0,p[k][2]]; zs = [0,p[k][3]]
-        xd = [0,B[k][1]]; yd = [0,B[k][2]]; zd = [0,B[k][3]]
 
-        arrows!(ax,xs,ys,zs,xd,yd,zd,color=:red, arrowsize=0.03)
-    end
-
-    xlims!(ax, -10, 10)
-    ylims!(ax, -10, 10)
-    zlims!(ax, -10, 10)
-     
+    plot(cone(x=[k[1] for k in p], y=[k[2] for k in p], z=[k[3] for k in p],
+                u=[k[1] for k in B], v=[k[2] for k in B], w=[k[3] for k in B]))
 end
