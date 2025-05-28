@@ -23,16 +23,8 @@ function Bsheet(sheet, r2)
     c2 = alpha^2 * C^2
     p2 = -B_val^2
         
-    JJ1 = integral_GR2284(0, 1, a1, b1, c1, p1)
-    JJ2 = integral_GR2284(1, 0, a1, b1, c1, p1)
-    JJ3 = integral_GR2284(0, 1, a2, b2, c2, p2)
-    JJ4 = integral_GR2284(1, 0, a2, b2, c2, p2)
-        
-    term1 = cross(rb - ra, delta_r) * alpha * C * ((C - B_val) * JJ1 + B_val * JJ3)
-    term2 = alpha^2 * C^2 * nn * ((C - B_val) * JJ2 + B_val * JJ4)
-    out = (term1 + term2) * Br / (4π)
-    Bout += out
-    return Bout
+    println(a1, b1, c1, p1)
+    println(a2, b2, c2, p2)
     
 end
 

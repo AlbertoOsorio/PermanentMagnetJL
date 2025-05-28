@@ -19,8 +19,6 @@ function drawDipole(u)
     p = [[x[kx], y[ky], z[kz]] for kx in 1:length(gx) for ky in 1:length(gy) for kz in 1:length(gz)]
     B = [Bevaluate(u, p[i]) for i in 1:length(p)]
 
-    #plot(cone(x=[k[1] for k in p], y=[k[2] for k in p], z=[k[3] for k in p],
-    #            u=[k[1] for k in B], v=[k[2] for k in B], w=[k[3] for k in B]))
+    plot(cone(x=[k[1] for k in p], y=[k[2] for k in p], z=[k[3] for k in p],
+                u=[k[1] for k in B], v=[k[2] for k in B], w=[k[3] for k in B]))
 end
-
-@benchmark drawDipole([0,-5,0])

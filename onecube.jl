@@ -1,6 +1,6 @@
 using PlotlyJS
-include("main/drawSheet.jl")
-include("main/util.jl")
+include("main/sheets/drawSheet.jl")
+include("main/sheets/util.jl")
 
 sheets =   [[[5,-5,0],[5,5,0], [1,0,0]],
             [[5,5,0],[-5,5,0], [0,1,0]], 
