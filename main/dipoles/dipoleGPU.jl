@@ -21,36 +21,35 @@ function Bevaluate(u::CuArray, p::CuArray, pos::CuArray)
 end
 
 
-function Evaluate(Nmagnets)
+function RingGeneric(Nmagnets::Int, viz=false)
     w = 80
     gx = -w:4:w; gy = gx; gz = gx
+
+    r_ring = 150.
     
     points_cpu = hcat([[x, y, z] for x in gx, y in gy, z in gz]...)
-    points = cu(points_cpu)
-    
-    r_ring = 150.
     positions, moments = makeRing(Nmagnets, r_ring, 10)
-    pos = cu(positions); m = cu(moments)
+    pos = cu(positions); m = cu(moments); points = cu(points_cpu)
 
     B = Bevaluate(m, points, pos)
 
-    #@allowscalar begin
-    #    plot(cone(x=points[1,:], y=points[2,:], z=points[3,:], u=B[1,:], v=B[2,:], w=B[3,:]))
-    #end
-
+    if viz
+        @allowscalar plot(cone(x=points[1,:], y=points[2,:], z=points[3,:], u=B[1,:], v=B[2,:], w=B[3,:]))
+    end
 end
 
-function B0()
-    gx = -150:4:150; gy = gx; gz = -140:4:140
-    points_cpu = hcat([[x, y, z] for x in gx, y in gy, z in gz]...)
-    points = cu(points_cpu)
+function B0(viz=false)
+    gx = -150:5:150;; gy=gx; gz=gx; x = gx; z = gz 
+    y = gy#zeros(size(z))
 
-    data = npzread("B0.npz")
-    positions = data["array1"]
-    moments = data["array2"]
-    pos = cu(positions); m = cu(moments)
+    data = npzread("main/data/B0.npz")
+    positions = data["array1"]; moments = data["array2"]
+    points_cpu = hcat([[x, y, z] for x in gx, y in gy, z in gz]...)
+    pos = cu(positions); m = cu(moments); points = cu(points_cpu)
+
     B = Bevaluate(m, points, pos)
-    @allowscalar begin
-        plot(cone(x=points[1,:], y=points[2,:], z=points[3,:], u=B[1,:], v=B[2,:], w=B[3,:]))
+
+    if viz
+        @allowscalar plot(cone(x=points_cpu[1,:], y=points_cpu[2,:], z=points_cpu[3,:], u=B[1,:], v=B[2,:], w=B[3,:]))
     end
 end
