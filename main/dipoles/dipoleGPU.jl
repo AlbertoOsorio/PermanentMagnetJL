@@ -3,8 +3,18 @@ using CUDA
 using PlotlyJS
 using BenchmarkTools
 using GPUArrays: @allowscalar
+using Distributions, Random
+include("../gru.jl")
 
 const μ0 = 4π * 1e-7  
+
+function distribute(arr, magnetization, sigma)
+    d = Normal(magnetization, sigma) 
+    #td = truncated(d, magnetization - 5, magnetization + 5)
+    vals = rand(d, size(arr))
+    sampled = vals .* arr
+    return sampled
+end
 
 function makeRing(Nmag, r, magnitude)
     pos = hcat([[r*cos(2*π*n/Nmag+π/2); r*sin(2*π*n/Nmag+π/2); 0] for n in 0:Nmag-1]...)
@@ -38,18 +48,40 @@ function RingGeneric(Nmagnets::Int, viz=false)
     end
 end
 
-function B0(viz=false)
-    gx = -150:5:150;; gy=gx; gz=gx; x = gx; z = gz 
-    y = gy#zeros(size(z))
+function B0(rnd=false)
+    #zeros(size(z))
+    gx = -80:4:80; gy = gx; gz = [-70, -50, -30,-10, 10, 30, 50, 70, 90, 110] #[-60, -40, -20, 0, 20, 40, 60] 
+    points_cpu = hcat([[x, y, z] for x in gx, y in gy, z in gz]...)
 
     data = npzread("main/data/B0.npz")
-    positions = data["array1"]; moments = data["array2"]
-    points_cpu = hcat([[x, y, z] for x in gx, y in gy, z in gz]...)
-    pos = cu(positions); m = cu(moments); points = cu(points_cpu)
+    positions17 = data["array1"]; moments17 = data["array2"]
+    if rnd; ori17 = distribute(moments17, 15, 0.5)
+    else; ori17 = moments17 .* 15.
+    end
 
+    positions8 = data["array3"]; moments8 = data["array4"]
+    if rnd; ori8 = distribute(moments8, 20, 0.5)
+    else; ori8 = moments8 .* 20.
+    end
+
+    positions = hcat(positions17, positions8); ori = hcat(ori17, ori8)
+    pos = cu(positions); m = cu(ori); points = cu(points_cpu)
     B = Bevaluate(m, points, pos)
 
-    if viz
-        @allowscalar plot(cone(x=points_cpu[1,:], y=points_cpu[2,:], z=points_cpu[3,:], u=B[1,:], v=B[2,:], w=B[3,:]))
+    XX = [xi for xi in gx, yi in gy, zi in gz]
+    mask = trues(size(XX))
+    By = zeros(size(XX))
+    @allowscalar begin
+        By[mask] = B[2,:]
+        fig = Figure(size=(600,600))
+        saxi = Slicer3D(fig,By,zoom=5)  
+        display(fig)
+        for (i, zval) in enumerate(1:size(By,3))
+            saxi.sliders[1].value[] = zval
+            sleep(0.1)
+            save("slice_z_$(lpad(i,3,'0')).png", fig)
+        end
+
     end
+
 end
