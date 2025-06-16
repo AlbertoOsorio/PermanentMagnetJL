@@ -4,14 +4,15 @@ using PlotlyJS
 using BenchmarkTools
 using GPUArrays: @allowscalar
 using Distributions, Random
+using Printf
 include("../gru.jl")
 
 const μ0 = 4π * 1e-7  
 
 function distribute(arr, magnetization, sigma)
     d = Normal(magnetization, sigma) 
-    #td = truncated(d, magnetization - 5, magnetization + 5)
-    vals = rand(d, size(arr))
+    td = truncated(d, magnetization - 3, magnetization + 3)
+    vals = rand(td, size(arr))
     sampled = vals .* arr
     return sampled
 end
@@ -50,7 +51,7 @@ end
 
 function B0(rnd=false)
     #zeros(size(z))
-    gx = -80:4:80; gy = gx; gz = [-70, -50, -30,-10, 10, 30, 50, 70, 90, 110] #[-60, -40, -20, 0, 20, 40, 60] 
+    gx = -80:4:80; gy = gx; gz = [-110, -90, -70, -50, -30,-10, 10, 30, 50, 70, 90, 110, 130, 150] #[-60, -40, -20, 0, 20, 40, 60] 
     points_cpu = hcat([[x, y, z] for x in gx, y in gy, z in gz]...)
 
     data = npzread("main/data/B0.npz")
@@ -79,7 +80,7 @@ function B0(rnd=false)
         for (i, zval) in enumerate(1:size(By,3))
             saxi.sliders[1].value[] = zval
             sleep(0.1)
-            save("slice_z_$(lpad(i,3,'0')).png", fig)
+            save("imgs/realista/slice_z_$(lpad(i,3,'0')).png", fig)
         end
 
     end

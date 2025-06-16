@@ -1,45 +1,41 @@
 using CUDA
 using LinearAlgebra
+using Distributions, Random
 
 const alpha = 1
 const Br = 1.47
 
-
-@inline function gpu_cross(a::NTuple{3, Float32}, b::NTuple{3, Float32})::NTuple{3, Float32}
-    ax, ay, az = a
-    bx, by, bz = b
-    return cu(
-        ay * bz - az * by,
-        az * bx - ax * bz,
-        ax * by - ay * bx,
-    )
+function crossShift(a, b)
+    ashift = circshift(a, [-1]); ashift2 = circshift(a, [-2])
+    bshift = circshift(b, [-2]); bshift2 = circshift(b, [-1])
+    return ashift.*bshift - ashift2.*bshift2;
 end
 
+function b(t, s, ra, rb, pp, r2)
+    A = sum((r2 .- ra .- s .* pp).^2; dims=1)
+    B = sum((r2 .- ra .- s .* pp) .* (rb - ra) ; dims=1)
+    C = sum((rb .- ra).^2 ; dims=1)
+    return crossShift((rb - ra), (r2 .- ra .- s .* pp)) ./ (A - 2*B .* t + C .* t).^(3/2)
+end
 
+function mc(N, ra, rb, pp, r2)
+    dist_t = Uniform(0, 1)     ; tr = rand(dist_t, N); t = cu(reshape(tr, 1, 1, 1, :))
+    dist_s = Uniform(-1/2, 1/2); sr = rand(dist_s, N); s = cu(reshape(sr, 1, 1, 1, :))
 
-function BsheetGPU(sheet, r2)
-    ra = cu(sheet[1]); rb = cu(sheet[2]); nn = cu(sheet[3])
-
-    pp = alpha .* gpu_cross.(rb.-ra, nn)
-    delta_r = r2 .- ra
-    A = sum(delta_r.^2; dims=1)
-    B_val = sum(delta_r .* rb-ra ; dims=1)
-    C = sum((rb.-ra).^2 ; dims=1)
-    D = sum(delta_r .* pp ; dims=1)
-
-    a1 = A .* C .- 2 .* B_val .* C .+ C.^2
-    b1 = -2 .* C .* D
-    c1 = alpha^2 .* C.^2
-    p1 = -(C .- B_val).^2
-    
-    a2 = A .* C
-    b2 = -2 .* C .* D
-    c2 = alpha^2 .* C.^2
-    p2 = -B_val.^2
-
-    println(a1, b1, c1, p1)
-    println(a2, b2, c2, p2)
+    B = (b(t, s, ra, rb, pp, r2)) ./ N
 
 end
 
+function BsheetGPU(ra_cpu, rb_cpu, nn_cpu, r2_cpu)
+    r_a=cu(ra_cpu); r_b=cu(rb_cpu); n_n=cu(nn_cpu); r_2=cu(r2_cpu)
+    p_p = alpha .* crossShift(r_b - r_a, n_n)
 
+    ra = reshape(r_a, 3, 1, :, 1) 
+    rb = reshape(r_b, 3, 1, :, 1)
+    nn = reshape(n_n, 3, 1, :, 1)
+    pp = reshape(p_p, 3, 1, :, 1)
+    r2 = reshape(r_2, 3, :, 1, 1)
+
+    B = mc(10, ra, rb, pp, r2)
+    println(size(B))
+end
