@@ -15,15 +15,13 @@ function b(t, s, ra, rb, pp, r2)
     A = sum((r2 .- ra .- s .* pp).^2; dims=1)
     B = sum((r2 .- ra .- s .* pp) .* (rb - ra) ; dims=1)
     C = sum((rb .- ra).^2 ; dims=1)
-    return crossShift((rb - ra), (r2 .- ra .- s .* pp)) ./ (A - 2*B .* t + C .* t).^(3/2)
+    return crossShift((rb - ra), (r2 .- ra .- s .* pp)) ./ (A .- 2*B .* t .+ C .* t).^(3/2)
 end
 
 function mc(N, ra, rb, pp, r2)
     dist_t = Uniform(0, 1)     ; tr = rand(dist_t, N); t = cu(reshape(tr, 1, 1, 1, :))
     dist_s = Uniform(-1/2, 1/2); sr = rand(dist_s, N); s = cu(reshape(sr, 1, 1, 1, :))
-
-    B = (b(t, s, ra, rb, pp, r2)) ./ N
-
+    B = sum((b(t, s, ra, rb, pp, r2)); dims=4) ./ N
 end
 
 function BsheetGPU(ra_cpu, rb_cpu, nn_cpu, r2_cpu)
@@ -36,6 +34,6 @@ function BsheetGPU(ra_cpu, rb_cpu, nn_cpu, r2_cpu)
     pp = reshape(p_p, 3, 1, :, 1)
     r2 = reshape(r_2, 3, :, 1, 1)
 
-    B = mc(10, ra, rb, pp, r2)
-    println(size(B))
+    B = sum(mc(100, ra, rb, pp, r2); dims=3)
+    return dropdims(dropdims(B; dims=4); dims=3)
 end
