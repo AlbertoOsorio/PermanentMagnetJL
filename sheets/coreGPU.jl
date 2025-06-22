@@ -24,7 +24,7 @@ function mc(N, ra, rb, pp, r2)
     B = sum((b(t, s, ra, rb, pp, r2)); dims=4) ./ N
 end
 
-function BsheetGPU(ra_cpu, rb_cpu, nn_cpu, r2_cpu)
+function BfSheet(ra_cpu, rb_cpu, nn_cpu, r2_cpu)
     r_a=cu(ra_cpu); r_b=cu(rb_cpu); n_n=cu(nn_cpu); r_2=cu(r2_cpu)
     p_p = alpha .* crossShift(r_b - r_a, n_n)
 
