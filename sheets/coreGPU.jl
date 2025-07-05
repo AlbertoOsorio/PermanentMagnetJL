@@ -18,10 +18,26 @@ function b(t, s, ra, rb, pp, r2)
     return crossShift((rb - ra), (r2 .- ra .- s .* pp)) ./ (A .- 2*B .* t .+ C .* t).^(3/2)
 end
 
-function mc(N, ra, rb, pp, r2)
-    dist_t = Uniform(0, 1)     ; tr = rand(dist_t, N); t = cu(reshape(tr, 1, 1, 1, :))
-    dist_s = Uniform(-1/2, 1/2); sr = rand(dist_s, N); s = cu(reshape(sr, 1, 1, 1, :))
-    B = sum((b(t, s, ra, rb, pp, r2)); dims=4) ./ N
+function mc(N::Int, ra::CuArray, rb::CuArray, pp::CuArray, r2::CuArray; batch_size=2^18)
+    C = sum((rb .- ra).^2; dims=1)
+    # Initialize B_sum as CuArray (GPU memory)
+    B_sum = zeros(eltype(C), 3, size(r2,2), size(ra,3), 1) 
+    T = eltype(ra)
+    total_samples = N
+
+    while N > 0
+        current_batch = min(batch_size, N)
+        N -= current_batch
+
+        # Generate random numbers directly on GPU
+        t = CUDA.rand(T, 1, 1, 1, current_batch)          # t ∈ [0,1)
+        s = (CUDA.rand(T, 1, 1, 1, current_batch) .- T(0.5))  # s ∈ [-0.5,0.5)
+
+        # Compute and accumulate on GPU
+        B_sum .+= sum(b(t, s, ra, rb, pp, r2); dims=4)
+    end
+
+    return (B_sum .* sqrt.(C)) ./ total_samples
 end
 
 function BfSheet(ra_cpu, rb_cpu, nn_cpu, r2_cpu)

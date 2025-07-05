@@ -54,7 +54,7 @@ function B0(rnd=false)
     gx = -80:4:80; gy = gx; gz = [-110, -90, -70, -50, -30,-10, 10, 30, 50, 70, 90, 110, 130, 150] #[-60, -40, -20, 0, 20, 40, 60] 
     points_cpu = hcat([[x, y, z] for x in gx, y in gy, z in gz]...)
 
-    data = npzread("main/data/B0.npz")
+    data = npzread("data/B0.npz")
     positions17 = data["array1"]; moments17 = data["array2"]
     if rnd; ori17 = distribute(moments17, 15, 0.5)
     else; ori17 = moments17 .* 15.
@@ -77,11 +77,11 @@ function B0(rnd=false)
         fig = Figure(size=(600,600))
         saxi = Slicer3D(fig,By,zoom=5)  
         display(fig)
-        for (i, zval) in enumerate(1:size(By,3))
-            saxi.sliders[1].value[] = zval
-            sleep(0.1)
-            save("imgs/realista/slice_z_$(lpad(i,3,'0')).png", fig)
-        end
+        #for (i, zval) in enumerate(1:size(By,3))
+        #    saxi.sliders[1].value[] = zval
+        #    sleep(0.1)
+        #    save("imgs/realista/slice_z_$(lpad(i,3,'0')).png", fig)
+        #end
 
     end
 
